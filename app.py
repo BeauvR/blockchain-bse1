@@ -1,29 +1,51 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from flask_expects_json import expects_json
+
+from Classes.Block import Block
+from Classes.BlockChain import BlockChain
+
+BlockChain = BlockChain()
 
 app = Flask(__name__)
 
 
-@app.route('/')
-def hello_world():
-    return jsonify({
-        "hash": "0000000000000bae09a7a393a8acded75aa67e46cb81f7acaa5ad94f9eacd103",
-        "ver": 1,
-        "prev_block": "00000000000007d0f98d9edca880a6c124e25095712df8952e0439ac7409738a",
-        "mrkl_root": "935aa0ed2e29a4b81e0c995c39e06995ecce7ddbebb26ed32d550a72e8200bf5",
-        "time": 1322131230,
-        "bits": 437129626,
-        "nonce": 2964215930,
-        "n_tx": 22,
-        "size": 9195,
-        "block_index": 818044,
-        "main_chain": True,
-        "height": 154595,
-        "received_time": 1322131301,
-        "relayed_by": "108.60.208.156",
-        "tx": [
-            "--Array of Transactions--"
-        ]
-    })
+@app.route('/genesisBlock', methods=['GET'])
+def get_genesis_block():
+    return jsonify(BlockChain.get_genesis_block().__dict__)
+
+
+@app.route('/lastBlock', methods=['GET'])
+def get_last_block():
+    return jsonify(BlockChain.get_last_block().__dict__)
+
+
+@app.route('/chain', methods=['GET'])
+def get_chain():
+    chain = map(lambda block: block.__dict__, BlockChain.chain)
+    return jsonify(list(chain))
+
+
+@app.route('/block', methods=['POST'])
+@expects_json({
+    'type': 'object',
+    'properties': {
+        'transactions': {
+            'type': 'array',
+        },
+    },
+    'required': ['transactions'],
+})
+def create_block():
+    block = BlockChain.add_block(request.json['transactions'])
+    return jsonify(block.__dict__)
+
+
+@app.route('/block/<block_hash>', methods=['GET'])
+def get_block(block_hash):
+    block = BlockChain.get_block(block_hash)
+    if block is None:
+        return jsonify({'error': 'Block not found'}), 404
+    return jsonify(block.__dict__)
 
 
 if __name__ == '__main__':
