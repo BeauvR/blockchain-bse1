@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_expects_json import expects_json
 
-from Classes.Block import Block
 from Classes.BlockChain import BlockChain
 
 BlockChain = BlockChain()

@@ -1,4 +1,4 @@
-from app import app, BlockChain as AppBlockChain
+from App import app, BlockChain as AppBlockChain
 
 import unittest
 
