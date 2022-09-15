@@ -18,7 +18,3 @@ class BlockTestCase(unittest.TestCase):
         block = Block(['test_transactions'], 0)
 
         self.assertTrue(block.hash is not None)
-
-
-if __name__ == '__main__':
-    unittest.main()

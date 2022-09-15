@@ -46,7 +46,3 @@ def get_block(block_hash):
     if block is None:
         return jsonify({'error': 'Block not found'}), 404
     return jsonify(block.__dict__)
-
-
-if __name__ == '__main__':
-    app.run()

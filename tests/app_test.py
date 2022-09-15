@@ -62,6 +62,8 @@ class AppTestCase(unittest.TestCase):
         self.assertTrue('transactions' in response.json)
         self.assertTrue(response.json['transactions'] == ['test_transaction1', 'test_transaction2'])
 
+    def test_the_app_returns_404_when_a_block_is_not_found(self):
+        client = app.test_client(self)
+        response = client.get('/block/invalid_hash')
 
-if __name__ == '__main__':
-    unittest.main()
+        self.assertEqual(response.status_code, 404)

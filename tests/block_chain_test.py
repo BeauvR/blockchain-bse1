@@ -72,6 +72,9 @@ class BlockChainTestCase(unittest.TestCase):
 
         self.assertTrue(block_chain.chain[-1] == block)
 
+    def test_the_chain_returns_none_when_a_block_is_not_found(self):
+        block_chain = BlockChain()
+        block_chain.add_block(['test_transactions'])
+        block = block_chain.get_block('test_hash')
 
-if __name__ == '__main__':
-    unittest.main()
+        self.assertTrue(block is None)
