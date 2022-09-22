@@ -45,3 +45,34 @@ def get_block(block_hash):
     if block is None:
         return jsonify({'error': 'Block not found'}), 404
     return jsonify(block.__dict__)
+
+
+@app.route('/transaction', methods=['POST'])
+@expects_json({
+    'type': 'object',
+    'properties': {
+        'sender': {
+            'type': 'string',
+            'minLength': 1,
+            'maxLength': 50,
+            'pattern': '^[a-zA-Z0-9]+$',
+        },
+        'recipient': {
+            'type': 'string',
+            'minLength': 1,
+            'maxLength': 50,
+            'pattern': '^[a-zA-Z0-9]+$',
+        },
+        'amount': {
+            'type': 'integer',
+            'minimum': 1,
+        },
+    },
+})
+def create_transaction():
+    transaction = BlockChain.add_transaction(
+        request.json['sender'],
+        request.json['recipient'],
+        request.json['amount'],
+    )
+    return jsonify(transaction.__dict__)

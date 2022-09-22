@@ -4,6 +4,10 @@ from Classes.BlockChain import BlockChain
 
 
 class BlockChainTestCase(unittest.TestCase):
+    def test_the_chain_has_a_empty_list_of_transactions_on_initialization(self):
+        blockchain = BlockChain()
+        self.assertEqual(blockchain.transactions, [])
+
     def test_the_chain_generates_a_genesis_block_on_init(self):
         block_chain = BlockChain()
         self.assertTrue(len(block_chain.chain) == 1)
@@ -78,3 +82,10 @@ class BlockChainTestCase(unittest.TestCase):
         block = block_chain.get_block('test_hash')
 
         self.assertTrue(block is None)
+
+    def test_the_chain_can_add_a_transaction(self):
+        block_chain = BlockChain()
+        transaction = block_chain.add_transaction('test_sender', 'test_recipient', 100)
+
+        self.assertTrue(len(block_chain.transactions) == 1)
+        self.assertEqual(block_chain.transactions[0], transaction)

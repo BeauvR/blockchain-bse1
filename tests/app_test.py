@@ -67,3 +67,44 @@ class AppTestCase(unittest.TestCase):
         response = client.get('/block/invalid_hash')
 
         self.assertEqual(response.status_code, 404)
+
+    def test_the_app_returns_a_error_when_the_sender_is_more_than_50_characters(self):
+        client = app.test_client(self)
+        response = client.post('/transaction',
+                               json={'sender': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                                     'recipient': 'recipient', 'amount': 50})
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_the_app_returns_a_error_when_the_recipient_is_more_than_50_characters(self):
+        client = app.test_client(self)
+        response = client.post('/transaction',
+                               json={'sender': 'sender',
+                                     'recipient': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                                     'amount': 50})
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_the_app_returns_a_error_when_the_transaction_amount_is_not_a_integer(self):
+        client = app.test_client(self)
+        response = client.post('/transaction', json={'sender': 'sender', 'recipient': 'recipient', 'amount': 'amount'})
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_the_app_returns_a_error_when_the_transaction_amount_is_negative(self):
+        client = app.test_client(self)
+        response = client.post('/transaction', json={'sender': 'sender', 'recipient': 'recipient', 'amount': -50})
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_the_app_can_create_a_transaction(self):
+        client = app.test_client(self)
+        response = client.post('/transaction', json={'sender': 'sender', 'recipient': 'recipient', 'amount': 50})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('sender' in response.json)
+        self.assertTrue(response.json['sender'] == 'sender')
+        self.assertTrue('recipient' in response.json)
+        self.assertTrue(response.json['recipient'] == 'recipient')
+        self.assertTrue('amount' in response.json)
+        self.assertTrue(response.json['amount'] == 50)

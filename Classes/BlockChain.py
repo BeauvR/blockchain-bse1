@@ -1,11 +1,11 @@
-import time
-
 from Classes.Block import Block
+from Classes.Transaction import Transaction
 
 
 class BlockChain(object):
     def __init__(self):
         self.chain = []
+        self.transactions = []
         self.create_genesis_block()
 
     def create_genesis_block(self):
@@ -32,3 +32,8 @@ class BlockChain(object):
             if block.hash == block_hash:
                 return block
         return None
+
+    def add_transaction(self, sender, recipient, amount):
+        transaction = Transaction(sender, recipient, amount)
+        self.transactions.append(transaction)
+        return transaction
