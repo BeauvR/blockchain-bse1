@@ -3,10 +3,11 @@ import time
 
 
 class Block(object):
-    def __init__(self, transactions, previous_hash):
+    def __init__(self, transactions, previous_hash, nonce):
         self.timestamp = time.time_ns()
         self.transactions = transactions
         self.previous_hash = previous_hash
+        self.nonce = nonce
         self.hash = self.calculate_hash()
 
     def calculate_hash(self):
@@ -14,5 +15,7 @@ class Block(object):
         sha.update(
             str(self.timestamp).encode('utf-8') +
             str(self.transactions).encode('utf-8') +
-            str(self.previous_hash).encode('utf-8'))
+            str(self.previous_hash).encode('utf-8') +
+            str(self.nonce).encode('utf-8')
+        )
         return sha.hexdigest()

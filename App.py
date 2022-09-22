@@ -8,6 +8,11 @@ BlockChain = BlockChain()
 app = Flask(__name__)
 
 
+@app.route('/difficulty', methods=['GET'])
+def get_difficulty():
+    return jsonify(BlockChain.difficulty)
+
+
 @app.route('/genesisBlock', methods=['GET'])
 def get_genesis_block():
     return jsonify(BlockChain.get_genesis_block().__dict__)
@@ -28,14 +33,18 @@ def get_chain():
 @expects_json({
     'type': 'object',
     'properties': {
-        'transactions': {
-            'type': 'array',
+        'nonce': {
+            'type': 'integer'
         },
     },
-    'required': ['transactions'],
+    'required': ['nonce'],
 })
 def create_block():
-    block = BlockChain.add_block(request.json['transactions'])
+    block = BlockChain.add_block(request.json['nonce'])
+
+    if block is None:
+        return jsonify({'message': 'Block not added', 'reason': 'Invalid hash'}), 400
+
     return jsonify(block.__dict__)
 
 
