@@ -115,3 +115,32 @@ class BlockChainTestCase(unittest.TestCase):
 
         self.assertTrue(len(block_chain.transactions) == 1)
         self.assertEqual(block_chain.transactions[0], transaction)
+
+    @patch('time.time_ns', mock_time)
+    def test_the_chain_returns_valid_when_the_chain_is_valid(self):
+        block_chain = BlockChain()
+        block_chain.transactions = ['test_transactions']
+
+        block_chain.add_block(6)
+
+        self.assertTrue(block_chain.is_valid())
+
+    @patch('time.time_ns', mock_time)
+    def test_the_chain_returns_invalid_when_the_chain_is_invalid_caused_wrong_hash(self):
+        block_chain = BlockChain()
+        block_chain.transactions = ['test_transactions']
+
+        block_chain.add_block(6)
+        block_chain.chain[1].hash = 'test_hash'
+
+        self.assertFalse(block_chain.is_valid())
+
+    @patch('time.time_ns', mock_time)
+    def test_the_chain_returns_invalid_when_the_chain_is_invalid_caused_wrong_previous_hash(self):
+        block_chain = BlockChain()
+        block_chain.transactions = ['test_transactions']
+
+        block_chain.add_block(6)
+        block_chain.chain[1].previous_hash = 'test_hash'
+
+        self.assertFalse(block_chain.is_valid())

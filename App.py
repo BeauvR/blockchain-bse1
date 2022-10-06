@@ -85,3 +85,10 @@ def create_transaction():
         request.json['amount'],
     )
     return jsonify(transaction.__dict__)
+
+
+@app.route('/valid', methods=['GET'])
+def is_valid():
+    return jsonify({
+        'valid': BlockChain.is_valid(),
+    })

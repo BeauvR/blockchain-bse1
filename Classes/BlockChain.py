@@ -43,3 +43,16 @@ class BlockChain(object):
         transaction = Transaction(sender, recipient, amount)
         self.transactions.append(transaction)
         return transaction
+
+    def is_valid(self):
+        for i in range(1, len(self.chain)):
+            current_block = self.chain[i]
+            previous_block = self.chain[i - 1]
+
+            if current_block.hash != current_block.calculate_hash():
+                return False
+
+            if current_block.previous_hash != previous_block.hash:
+                return False
+
+        return True

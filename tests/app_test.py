@@ -142,3 +142,11 @@ class AppTestCase(unittest.TestCase):
         self.assertTrue(response.json['recipient'] == 'recipient')
         self.assertTrue('amount' in response.json)
         self.assertTrue(response.json['amount'] == 50)
+
+    def test_the_app_returns_correct_if_the_chain_is_valid(self):
+        client = app.test_client(self)
+        response = client.get('/valid')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('valid' in response.json)
+        self.assertTrue(response.json['valid'] == AppBlockChain.is_valid())
