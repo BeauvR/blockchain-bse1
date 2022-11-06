@@ -37,7 +37,7 @@ class BlockChainTestCase(unittest.TestCase):
 
     def test_the_chain_resets_when_a_genesis_block_is_created(self):
         block_chain = BlockChain()
-        block_chain.add_block(['test_transactions'])
+        block_chain.add_block()
         block_chain.create_genesis_block()
 
         self.assertTrue(len(block_chain.chain) == 1)
@@ -50,7 +50,7 @@ class BlockChainTestCase(unittest.TestCase):
 
     def test_the_chain_returns_the_correct_last_block(self):
         block_chain = BlockChain()
-        block_chain.add_block(['test_transactions'])
+        block_chain.add_block()
         last_block = block_chain.get_last_block()
 
         self.assertTrue(block_chain.chain[-1] == last_block)
@@ -59,37 +59,36 @@ class BlockChainTestCase(unittest.TestCase):
     def test_when_a_block_is_added_the_previous_hash_is_set(self):
         block_chain = BlockChain()
         block_chain.transactions = ['test_transactions']
-        block_chain.add_block(6)
+        block_chain.add_block()
 
         self.assertTrue(block_chain.chain[-1].previous_hash == block_chain.chain[-2].hash)
 
     def test_when_a_block_is_added_the_hash_is_calculated(self):
         block_chain = BlockChain()
-        block_chain.add_block(['test_transactions'])
+        block_chain.add_block()
 
         self.assertTrue(block_chain.chain[-1].hash is not None)
 
     def test_when_a_block_is_added_the_hash_is_correct(self):
         block_chain = BlockChain()
-        block_chain.add_block(['test_transactions'])
+        block_chain.add_block()
 
         self.assertTrue(block_chain.chain[-1].hash == block_chain.chain[-1].calculate_hash())
 
-    def test_a_block_could_not_be_added_the_the_chain_with_a_invalid_nonce(self):
+    def test_the_pending_transactions_will_be_removed_when_a_block_is_mined(self):
         block_chain = BlockChain()
         block_chain.transactions = ['test_transactions']
-        added_block = block_chain.add_block(0)
+        added_block = block_chain.add_block()
 
-        self.assertIsNone(added_block)
-        self.assertEqual(block_chain.transactions, ['test_transactions'])
+        self.assertIsNotNone(added_block)
+        self.assertEqual(block_chain.transactions, [])
 
     @patch('time.time_ns', mock_time)
     def test_a_block_could_be_added_to_the_chain_when_the_nonce_is_valid(self):
         block_chain = BlockChain()
         block_chain.transactions = ['test_transactions']
 
-        # Previous calculated nonce and 6 is the correct for difficulty 2
-        block = block_chain.add_block(6)
+        block = block_chain.add_block()
 
         self.assertIsNotNone(block)
         self.assertTrue(len(block_chain.chain) == 2)
@@ -97,14 +96,14 @@ class BlockChainTestCase(unittest.TestCase):
 
     def test_the_chain_returns_the_correct_block(self):
         block_chain = BlockChain()
-        block_chain.add_block(['test_transactions'])
+        block_chain.add_block()
         block = block_chain.get_block(block_chain.chain[-1].hash)
 
         self.assertTrue(block_chain.chain[-1] == block)
 
     def test_the_chain_returns_none_when_a_block_is_not_found(self):
         block_chain = BlockChain()
-        block_chain.add_block(['test_transactions'])
+        block_chain.add_block()
         block = block_chain.get_block('test_hash')
 
         self.assertTrue(block is None)
@@ -121,7 +120,7 @@ class BlockChainTestCase(unittest.TestCase):
         block_chain = BlockChain()
         block_chain.transactions = ['test_transactions']
 
-        block_chain.add_block(6)
+        block_chain.add_block()
 
         self.assertTrue(block_chain.is_valid())
 
@@ -130,7 +129,7 @@ class BlockChainTestCase(unittest.TestCase):
         block_chain = BlockChain()
         block_chain.transactions = ['test_transactions']
 
-        block_chain.add_block(6)
+        block_chain.add_block()
         block_chain.chain[1].hash = 'test_hash'
 
         self.assertFalse(block_chain.is_valid())
@@ -140,7 +139,7 @@ class BlockChainTestCase(unittest.TestCase):
         block_chain = BlockChain()
         block_chain.transactions = ['test_transactions']
 
-        block_chain.add_block(6)
+        block_chain.add_block()
         block_chain.chain[1].previous_hash = 'test_hash'
 
         self.assertFalse(block_chain.is_valid())

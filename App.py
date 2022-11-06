@@ -30,20 +30,8 @@ def get_chain():
 
 
 @app.route('/block', methods=['POST'])
-@expects_json({
-    'type': 'object',
-    'properties': {
-        'nonce': {
-            'type': 'integer'
-        },
-    },
-    'required': ['nonce'],
-})
 def create_block():
-    block = BlockChain.add_block(request.json['nonce'])
-
-    if block is None:
-        return jsonify({'message': 'Block not added', 'reason': 'Invalid hash'}), 400
+    block = BlockChain.add_block()
 
     return jsonify(block.__dict__)
 
