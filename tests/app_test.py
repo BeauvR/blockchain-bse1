@@ -1,24 +1,24 @@
-from App import app, BlockChain as AppBlockChain
+from App import app, block_chain as AppBlockChain
 
 import unittest
 from mock import *
 import time
 
-from Classes.Block import Block
+from Classes.block import Block
+from Classes.transaction import Transaction
+from Classes.transaction_input import TransactionInput
+from Classes.transaction_output import TransactionOutput
 
 mock_time = Mock()
 mock_time.return_value = 1234567890
 
+sample_transaction_output = TransactionOutput('address1', 1)
+sample_transaction_input = TransactionInput(sample_transaction_output)
+
+sample_transaction = Transaction([sample_transaction_input], [sample_transaction_output])
+
 
 class AppTestCase(unittest.TestCase):
-    def test_when_the_app_runs_a_genesis_block_is_created(self):
-        client = app.test_client(self)
-        response = client.get('/genesisBlock')
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue('hash' in response.json)
-        self.assertTrue(response.json['previous_hash'] == 0)
-
     def test_the_app_returns_the_correct_difficulty(self):
         client = app.test_client(self)
         response = client.get('/difficulty')
@@ -26,9 +26,17 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json == AppBlockChain.difficulty)
 
+    def test_when_the_app_runs_a_genesis_block_is_created(self):
+        client = app.test_client(self)
+        response = client.get('/genesisBlock')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('hash' in response.json)
+        self.assertTrue(response.json['previous_hash'] == '0000')
+
     @patch('time.time_ns', mock_time)
     def test_when_the_app_runs_it_returns_the_correct_last_block(self):
-        newest_block = Block(['test_transaction1', 'test_transaction2'], 0)
+        newest_block = Block([sample_transaction], 'previous_hash')
         AppBlockChain.chain.append(newest_block)
 
         client = app.test_client(self)
@@ -41,32 +49,34 @@ class AppTestCase(unittest.TestCase):
     def test_when_the_app_runs_it_returns_the_correct_chain(self):
         # reset the chain for testing
         AppBlockChain.create_genesis_block()
-        block = Block(['test_transaction1', 'test_transaction2'], 0)
+        block = Block([sample_transaction], 'previous_hash')
         AppBlockChain.chain.append(block)
 
         client = app.test_client(self)
         response = client.get('/chain')
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json[0]['previous_hash'] == 0)
+        self.assertTrue(response.json[0]['previous_hash'] == '0000')
         self.assertTrue(response.json[1]['hash'] == block.hash)
+
     @patch('time.time_ns', mock_time)
-    def test_the_app_can_create_a_block_where_the_correct_nonce_is_calculated(self):
+    def test_the_app_can_mine_a_block(self):
         # reset the chain for testing
         AppBlockChain.create_genesis_block()
-        block = AppBlockChain.transactions = ['test_transactions']
+        AppBlockChain.transactions = [sample_transaction]
+        AppBlockChain.transaction_output_pool = [sample_transaction_output]
 
         client = app.test_client(self)
         response = client.post('/block')
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue('nonce' in response.json)
-        self.assertTrue(response.json['nonce'] == 6)
+        self.assertIsNotNone(response.json['nonce'])
         self.assertTrue('hash' in response.json)
         self.assertTrue(response.json['hash'] == AppBlockChain.get_last_block().hash)
 
     def test_the_app_can_get_a_block(self):
-        block = Block(['test_transaction1', 'test_transaction2'], 0)
+        block = Block([sample_transaction], 'previous_hash')
         AppBlockChain.chain.append(block)
 
         client = app.test_client(self)
@@ -76,7 +86,7 @@ class AppTestCase(unittest.TestCase):
         self.assertTrue('hash' in response.json)
         self.assertTrue(response.json['hash'] == block.hash)
         self.assertTrue('transactions' in response.json)
-        self.assertTrue(response.json['transactions'] == ['test_transaction1', 'test_transaction2'])
+        self.assertIsNotNone(response.json['transactions'])
 
     def test_the_app_returns_404_when_a_block_is_not_found(self):
         client = app.test_client(self)
@@ -84,46 +94,65 @@ class AppTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_the_app_returns_a_error_when_the_sender_is_more_than_50_characters(self):
+    def test_the_app_returns_a_error_when_there_is_not_a_input(self):
         client = app.test_client(self)
         response = client.post('/transaction',
-                               json={'sender': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-                                     'recipient': 'recipient', 'amount': 50})
+                               json={'outputs': [{'address': 'address_recipient', 'amount': 50}]})
 
         self.assertEqual(response.status_code, 400)
 
-    def test_the_app_returns_a_error_when_the_recipient_is_more_than_50_characters(self):
+    def test_the_app_returns_a_error_when_there_is_a_invalid_input(self):
+        client = app.test_client(self)
+        response = client.post(
+            '/transaction',
+            json={
+                'inputs': [{'nonce': 'xxxx'}],
+                'outputs': [{'address': 'address_recipient', 'amount': 50}]}
+        )
+        print(response)
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_the_app_returns_a_error_when_there_is_a_invalid_input_with_unknown_id(self):
+        client = app.test_client(self)
+        response = client.post(
+            '/transaction',
+            json={
+                'inputs': [{'transaction_output_id': 'xxx'}],
+                'outputs': [{'address': 'address_recipient', 'amount': '50'}]}
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_the_app_returns_a_error_when_there_is_not_a_output(self):
         client = app.test_client(self)
         response = client.post('/transaction',
-                               json={'sender': 'sender',
-                                     'recipient': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-                                     'amount': 50})
+                               json={'inputs': [{'transaction_output_id': 'xxxx'}]})
 
         self.assertEqual(response.status_code, 400)
 
-    def test_the_app_returns_a_error_when_the_transaction_amount_is_not_a_integer(self):
+    def test_the_app_returns_a_error_when_there_is_a_invalid_output(self):
         client = app.test_client(self)
-        response = client.post('/transaction', json={'sender': 'sender', 'recipient': 'recipient', 'amount': 'amount'})
-
-        self.assertEqual(response.status_code, 400)
-
-    def test_the_app_returns_a_error_when_the_transaction_amount_is_negative(self):
-        client = app.test_client(self)
-        response = client.post('/transaction', json={'sender': 'sender', 'recipient': 'recipient', 'amount': -50})
+        response = client.post('/transaction',
+                               json={
+                                   'inputs': [{'transaction_output_id': 'xxxx'}],
+                                   'outputs': [{'nonce': 'address_recipient'}]}
+                               )
 
         self.assertEqual(response.status_code, 400)
 
     def test_the_app_can_create_a_transaction(self):
-        client = app.test_client(self)
-        response = client.post('/transaction', json={'sender': 'sender', 'recipient': 'recipient', 'amount': 50})
+        AppBlockChain.transaction_output_pool = [sample_transaction_output]
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue('sender' in response.json)
-        self.assertTrue(response.json['sender'] == 'sender')
-        self.assertTrue('recipient' in response.json)
-        self.assertTrue(response.json['recipient'] == 'recipient')
-        self.assertTrue('amount' in response.json)
-        self.assertTrue(response.json['amount'] == 50)
+        client = app.test_client(self)
+        response = client.post(
+            '/transaction',
+            json={
+                'inputs': [{'transaction_output_id': sample_transaction_output.id}],
+                'outputs': [{'address': 'address_recipient', 'amount': '50'}]
+            })
+
+        self.assertEqual(response.status_code, 201)
 
     def test_the_app_returns_correct_if_the_chain_is_valid(self):
         client = app.test_client(self)

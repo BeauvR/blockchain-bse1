@@ -1,82 +1,102 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_expects_json import expects_json
 
-from Classes.BlockChain import BlockChain
+from Classes.block_chain import BlockChain
+from Classes.transaction import Transaction
+from Classes.transaction_input import TransactionInput
+from Classes.transaction_output import TransactionOutput
 
-BlockChain = BlockChain()
+block_chain = BlockChain()
 
 app = Flask(__name__)
 
 
 @app.route('/difficulty', methods=['GET'])
-def get_difficulty():
-    return jsonify(BlockChain.difficulty)
+def get_difficulty() -> Response:
+    return jsonify(block_chain.difficulty)
 
 
 @app.route('/genesisBlock', methods=['GET'])
-def get_genesis_block():
-    return jsonify(BlockChain.get_genesis_block().__dict__)
+def get_genesis_block() -> Response:
+    genesis_block = block_chain.get_genesis_block()
+    return jsonify(genesis_block.__dict__())
 
 
 @app.route('/lastBlock', methods=['GET'])
-def get_last_block():
-    return jsonify(BlockChain.get_last_block().__dict__)
+def get_last_block() -> Response:
+    return jsonify(block_chain.get_last_block().__dict__())
 
 
 @app.route('/chain', methods=['GET'])
-def get_chain():
-    chain = map(lambda block: block.__dict__, BlockChain.chain)
+def get_chain() -> Response:
+    chain = map(lambda block: block.__dict__(), block_chain.chain)
     return jsonify(list(chain))
 
 
 @app.route('/block', methods=['POST'])
-def create_block():
-    block = BlockChain.add_block()
+def create_block() -> Response:
+    block = block_chain.add_block()
 
-    return jsonify(block.__dict__)
+    return jsonify(block.__dict__())
 
 
 @app.route('/block/<block_hash>', methods=['GET'])
-def get_block(block_hash):
-    block = BlockChain.get_block(block_hash)
+def get_block(block_hash) -> Response:
+    block = block_chain.get_block(block_hash)
     if block is None:
         return jsonify({'error': 'Block not found'}), 404
-    return jsonify(block.__dict__)
+    return jsonify(block.__dict__())
 
 
 @app.route('/transaction', methods=['POST'])
 @expects_json({
-    'type': 'object',
-    'properties': {
-        'sender': {
-            'type': 'string',
-            'minLength': 1,
-            'maxLength': 50,
-            'pattern': '^[a-zA-Z0-9]+$',
+    "type": "object",
+    "required": ["inputs", "outputs"],
+    "properties": {
+        "inputs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["transaction_output_id"],
+                "properties": {
+                    "transaction_output_id": {"type": "string"}
+                },
+            }
         },
-        'recipient': {
-            'type': 'string',
-            'minLength': 1,
-            'maxLength': 50,
-            'pattern': '^[a-zA-Z0-9]+$',
-        },
-        'amount': {
-            'type': 'integer',
-            'minimum': 1,
-        },
+        "outputs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["address", "amount"],
+                "properties": {
+                    "address": {"type": "string"},
+                    "amount": {"type": "string"}
+                }
+            }
+        }
     },
 })
 def create_transaction():
-    transaction = BlockChain.add_transaction(
-        request.json['sender'],
-        request.json['recipient'],
-        request.json['amount'],
-    )
-    return jsonify(transaction.__dict__)
+    print('here')
+    transaction_inputs = []
+    for requestInput in request.json['inputs']:
+        output = block_chain.get_transaction_output(requestInput['transaction_output_id'])
+        if output is None:
+            return jsonify({'error': 'Invalid transaction output id'}), 400
+        transaction_inputs.append(TransactionInput(output))
+
+    transaction_outputs = []
+    for requestOutput in request.json['outputs']:
+        transaction_outputs.append(TransactionOutput(requestOutput['address'], requestOutput['amount']))
+
+    transaction = Transaction(transaction_inputs, transaction_outputs)
+    block_chain.add_transaction(transaction)
+
+    return jsonify(transaction.__dict__()), 201
 
 
 @app.route('/valid', methods=['GET'])
 def is_valid():
     return jsonify({
-        'valid': BlockChain.is_valid(),
+        'valid': block_chain.is_valid(),
     })
