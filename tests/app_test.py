@@ -107,7 +107,7 @@ class AppTestCase(unittest.TestCase):
             '/transaction',
             json={
                 'inputs': [{'nonce': 'xxxx'}],
-                'outputs': [{'address': 'address_recipient', 'amount': 50}]}
+                'outputs': [{'address': 'address_recipient', 'amount': '50'}]}
         )
         print(response)
 
@@ -119,7 +119,7 @@ class AppTestCase(unittest.TestCase):
             '/transaction',
             json={
                 'inputs': [{'transaction_output_id': 'xxx'}],
-                'outputs': [{'address': 'address_recipient', 'amount': '50'}]}
+                'outputs': [{'address': 'address_recipient', 'amount': 50}]}
         )
 
         self.assertEqual(response.status_code, 400)
@@ -141,6 +141,19 @@ class AppTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_the_app_returns_a_error_when_the_transaction_is_not_valid(self):
+        AppBlockChain.transaction_output_pool = [sample_transaction_output]
+
+        client = app.test_client(self)
+        response = client.post(
+            '/transaction',
+            json={
+                'inputs': [{'transaction_output_id': sample_transaction_output.id}],
+                'outputs': [{'address': 'address_recipient', 'amount': 50}]
+            })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json['error'], 'Invalid transaction')
     def test_the_app_can_create_a_transaction(self):
         AppBlockChain.transaction_output_pool = [sample_transaction_output]
 
@@ -149,7 +162,7 @@ class AppTestCase(unittest.TestCase):
             '/transaction',
             json={
                 'inputs': [{'transaction_output_id': sample_transaction_output.id}],
-                'outputs': [{'address': 'address_recipient', 'amount': '50'}]
+                'outputs': [{'address': 'address_recipient', 'amount': 1}]
             })
 
         self.assertEqual(response.status_code, 201)

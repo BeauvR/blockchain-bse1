@@ -74,6 +74,41 @@ class Transaction(object):
                 return output
         return None
 
+    def is_valid(self, block_chain) -> bool:
+        used_transaction_outputs = []
+        total_input_amount = 0
+        total_output_amount = 0
+
+        for input in self.inputs:
+            if input.transaction_output is None:
+                return False
+
+            if block_chain.get_transaction_output(input.transaction_output.id) is None:
+                return False
+
+            if not input.verify_signature('public_key'):
+                return False
+
+            if input.transaction_output in used_transaction_outputs:
+                return False
+
+            used_transaction_outputs.append(input.transaction_output)
+            total_input_amount += input.transaction_output.amount
+
+        for output in self.outputs:
+            if output.amount <= 0:
+                return False
+
+            total_output_amount += output.amount
+
+        if total_input_amount < 0 or total_output_amount < 0:
+            return False
+
+        if total_input_amount < total_output_amount:
+            return False
+
+        return True
+
     def get_id_value_string(self) -> str:
         return self.inputs_to_string() + " -> " + self.outputs_to_string()
 

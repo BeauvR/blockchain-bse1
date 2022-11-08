@@ -2,12 +2,15 @@ import unittest
 
 from mock import *
 
+from Classes.block_chain import BlockChain
 from Classes.transaction import Transaction
 from Classes.transaction_input import TransactionInput
 from Classes.transaction_output import TransactionOutput
 
 mock_time = Mock()
 mock_time.return_value = 1234567890
+
+block_chain = BlockChain()
 
 sample_transaction_output = TransactionOutput('address', 1)
 sample_transaction_input = TransactionInput(sample_transaction_output)
@@ -188,6 +191,229 @@ class TransactionTestCase(unittest.TestCase):
         transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
 
         self.assertIsNone(transaction.get_fee_transaction_output())
+
+    def test_it_is_invalid_when_the_input_has_no_transaction_output(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 2)
+
+        transaction_input1.transaction_output = None
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain.transaction_output_pool))
+
+    def test_it_is_invalid_when_the_input_has_a_transaction_output_that_is_not_in_the_transaction_output_pool(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 2)
+
+        block_chain.transaction_output_pool = []
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+
+    def test_it_is_valid_when_the_input_has_a_transaction_output_that_is_in_the_transaction_output_pool(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 2)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertTrue(transaction.is_valid(block_chain))
+
+    def test_it_is_invalid_when_the_input_signature_is_invalid(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 2)
+
+        transaction_input1.signature = 'invalid_signature'
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+
+    def test_it_is_invalid_when_a_transaction_output_two_times_is_used_as_input(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_input2 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address3', 2)
+
+        block_chain.transaction_output_pool = [transaction_output1]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output2])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+    def test_it_is_invalid_when_the_output_amount_is_zero(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 0)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+
+    def test_it_is_invalid_when_the_output_amount_is_negative(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', -1)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+
+    def test_it_is_invalid_when_the_total_input_amount_is_below_zero(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', -2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 3)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+
+    def test_it_is_invalid_when_the_total_input_amount_is_zero(self):
+        transaction_output1 = TransactionOutput('address1', -1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 0)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 1)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+
+    def test_it_is_invalid_when_the_total_output_amount_is_below_zero(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', -3)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+
+    def test_it_is_invalid_when_the_total_output_amount_is_zero(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 0)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+
+    def test_it_is_invalid_when_the_total_input_amount_is_lower_than_the_total_output_amount(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 1)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 3)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertFalse(transaction.is_valid(block_chain))
+
+    def test_it_is_valid_when_all_requirements_are_met_and_the_totals_are_equal(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 2)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 3)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertTrue(transaction.is_valid(block_chain))
+
+    def test_it_is_valid_when_all_requirements_are_met_and_the_input_total_is_higher_than_the_output_total(self):
+        transaction_output1 = TransactionOutput('address1', 1)
+        transaction_input1 = TransactionInput(transaction_output1)
+
+        transaction_output2 = TransactionOutput('address2', 1)
+        transaction_input2 = TransactionInput(transaction_output2)
+
+        transaction_output3 = TransactionOutput('address3', 1)
+
+        block_chain.transaction_output_pool = [transaction_output1, transaction_output2]
+        block_chain.chain = []
+
+        transaction = Transaction([transaction_input1, transaction_input2], [transaction_output3])
+
+        self.assertTrue(transaction.is_valid(block_chain))
 
     def test_a_transaction_correctly_transforms_itself_to_a_string(self):
         transaction = Transaction([sample_transaction_input], [sample_transaction_output])

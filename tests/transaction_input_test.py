@@ -34,14 +34,14 @@ class TransactionInputTestCase(unittest.TestCase):
         transaction_input.set_signature('test_signature')
         self.assertEqual('test_signature', transaction_input.signature)
 
-    def test_the_transaction_input_signature_verify_method_returns_false_when_a_signature_is_not_set(self):
+    def test_the_transaction_input_signature_verify_method_returns_true_when_a_signature_is_not_set(self):
         transaction_input = TransactionInput(sample_transaction_output)
-        self.assertFalse(transaction_input.verify_signature('test_key'))
+        self.assertTrue(transaction_input.verify_signature('test_key'))
 
-    def test_the_transaction_input_signature_verify_method_returns_true_when_a_signature_is_set(self):
+    def test_the_transaction_input_signature_verify_method_returns_false_when_a_signature_is_set(self):
         transaction_input = TransactionInput(sample_transaction_output)
         transaction_input.set_signature('test_signature')
-        self.assertTrue(transaction_input.verify_signature('test_key'))
+        self.assertFalse(transaction_input.verify_signature('test_key'))
 
     @patch('time.time_ns', mock_time)
     def test_a_transaction_input_correctly_transforms_itself_to_a_string(self):

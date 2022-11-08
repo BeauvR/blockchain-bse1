@@ -70,14 +70,13 @@ def get_block(block_hash) -> Response:
                 "required": ["address", "amount"],
                 "properties": {
                     "address": {"type": "string"},
-                    "amount": {"type": "string"}
+                    "amount": {"type": "integer"}
                 }
             }
         }
     },
 })
 def create_transaction():
-    print('here')
     transaction_inputs = []
     for requestInput in request.json['inputs']:
         output = block_chain.get_transaction_output(requestInput['transaction_output_id'])
@@ -90,6 +89,10 @@ def create_transaction():
         transaction_outputs.append(TransactionOutput(requestOutput['address'], requestOutput['amount']))
 
     transaction = Transaction(transaction_inputs, transaction_outputs)
+
+    if not transaction.is_valid(block_chain):
+        return jsonify({'error': 'Invalid transaction'}), 400
+
     block_chain.add_transaction(transaction)
 
     return jsonify(transaction.__dict__()), 201

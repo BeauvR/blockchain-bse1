@@ -22,9 +22,10 @@ class TransactionInput(object):
 
     def verify_signature(self, public_key) -> bool:
         if not self.signature:
-            return False
+            return True
 
-        return True
+        # for testing purposes it returns false when a signature is set, TODO: implement signature verification
+        return False
 
     def get_id_value_string(self) -> str:
         return str(self.time) + " " + str(self.transaction_output)
