@@ -1,7 +1,10 @@
+from typing import List
+
 from flask import Flask, jsonify, request, Response
 from flask_expects_json import expects_json
 
 from Classes.block_chain import BlockChain
+from Classes.node import Node
 from Classes.transaction import Transaction
 from Classes.transaction_input import TransactionInput
 from Classes.transaction_output import TransactionOutput
@@ -9,6 +12,9 @@ from Classes.transaction_output import TransactionOutput
 block_chain = BlockChain()
 
 app = Flask(__name__)
+
+nodes: List[Node] = []
+node_register_password = 'da859bfa-3a8e-4da7-8e60-200d5259e15b'
 
 
 @app.route('/difficulty', methods=['GET'])
@@ -111,3 +117,33 @@ def get_balance(address) -> Response:
     return jsonify({
         'balance': balance,
     })
+
+
+@app.route('/node/register', methods=['POST'])
+@expects_json({
+    "type": "object",
+    "required": ["password", "address", "port"],
+    "properties": {
+        "password": {
+            "type": "string",
+        },
+        "address": {
+            "type": "string",
+        },
+        "port": {
+            "type": "integer",
+        }
+    },
+})
+def register_node():
+    if request.json['password'] != node_register_password:
+        return jsonify({'error': 'Invalid password'}), 400
+
+    for node in nodes:
+        if node.address == request.json['address'] and node.port == request.json['port']:
+            return jsonify({'error': 'Node already registered'}), 400
+
+    node = Node(request.json['address'], request.json['port'])
+    nodes.append(node)
+
+    return jsonify({'success': True}), 201

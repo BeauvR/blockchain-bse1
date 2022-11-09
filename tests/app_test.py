@@ -1,10 +1,11 @@
-from App import app, block_chain as AppBlockChain
+from App import app, block_chain as AppBlockChain, nodes as AppNodes, node_register_password as AppNodeRegisterPassword
 
 import unittest
 from mock import *
 import time
 
 from Classes.block import Block
+from Classes.node import Node
 from Classes.transaction import Transaction
 from Classes.transaction_input import TransactionInput
 from Classes.transaction_output import TransactionOutput
@@ -187,3 +188,74 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue('balance' in response.json)
         self.assertTrue(response.json['balance'] == 2)
+
+    def test_a_node_can_not_be_registered_without_a_password(self):
+        client = app.test_client(self)
+        response = client.post('/node/register', json={
+            'address': '127.0.0.1',
+            'port': 5000,
+        })
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_a_node_can_not_be_registered_without_an_address(self):
+        client = app.test_client(self)
+        response = client.post('/node/register', json={
+            'password': AppNodeRegisterPassword,
+            'port': 5000,
+        })
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_a_node_can_not_be_registered_without_a_port(self):
+        client = app.test_client(self)
+        response = client.post('/node/register', json={
+            'password': AppNodeRegisterPassword,
+            'address': '127.0.0.1',
+        })
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_a_node_can_not_be_registered_with_a_string_as_port(self):
+        client = app.test_client(self)
+        response = client.post('/node/register', json={
+            'password': AppNodeRegisterPassword,
+            'address': '127.0.0.1',
+            'port': '5000',
+        })
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_a_node_can_not_be_registered_with_a_invalid_password(self):
+        client = app.test_client(self)
+        response = client.post('/node/register', json={
+            'password': 'invalid',
+            'address': '127.0.0.1',
+            'port': 5000,
+        })
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_a_node_can_not_be_registered_twice(self):
+        client = app.test_client(self)
+
+        AppNodes = [Node('127.0.0.1', 5000)]
+
+        response = client.post('/node/register', json={
+            'password': AppNodeRegisterPassword,
+            'address': '127.0.0.1',
+            'port': 5000,
+        })
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_a_node_can_be_registered(self):
+        client = app.test_client(self)
+
+        response = client.post('/node/register', json={
+            'password': AppNodeRegisterPassword,
+            'address': '127.0.0.1',
+            'port': 5000,
+        })
+
+        self.assertEqual(response.status_code, 201)
