@@ -41,7 +41,7 @@ class BlockChainTestCase(unittest.TestCase):
 
     def test_the_chain_resets_when_a_genesis_block_is_created(self):
         block_chain = BlockChain()
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
         block_chain.create_genesis_block()
 
         self.assertTrue(len(block_chain.chain) == 1)
@@ -67,7 +67,7 @@ class BlockChainTestCase(unittest.TestCase):
 
     def test_the_chain_returns_the_correct_last_block(self):
         block_chain = BlockChain()
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
         last_block = block_chain.get_last_block()
 
         self.assertTrue(block_chain.chain[-1] == last_block)
@@ -75,33 +75,44 @@ class BlockChainTestCase(unittest.TestCase):
     @patch('time.time_ns', mock_time)
     def test_when_a_block_is_added_the_previous_hash_is_set(self):
         block_chain = BlockChain()
-        block_chain.transactions = ['test_transactions']
-        block_chain.add_block()
+        block_chain.transactions = [sample_transaction]
+        block_chain.add_block('miner_address')
 
         self.assertTrue(block_chain.chain[-1].previous_hash == block_chain.chain[-2].hash)
 
     def test_when_a_block_is_added_the_hash_is_calculated(self):
         block_chain = BlockChain()
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
 
         self.assertTrue(block_chain.chain[-1].hash is not None)
 
     def test_when_a_block_is_added_the_hash_is_correct(self):
         block_chain = BlockChain()
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
 
         self.assertTrue(block_chain.chain[-1].hash == block_chain.chain[-1].calculate_hash())
 
     def test_when_a_block_is_added_its_mined_correctly(self):
         block_chain = BlockChain()
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
 
         self.assertTrue(block_chain.chain[-1].hash.startswith('0' * block_chain.difficulty))
 
+    def test_when_a_block_is_added_a_coinbase_transaction_is_added(self):
+        block_chain = BlockChain()
+        block_chain.add_transaction(sample_transaction)
+        block_chain.add_block('test_address')
+
+        added_block = block_chain.chain[-1]
+
+        self.assertTrue(len(added_block.transactions) == 2)
+        self.assertEqual(added_block.transactions[0].outputs[0].address, 'test_address')
+        self.assertEqual(added_block.transactions[0].outputs[0].amount, block_chain.coinbase)
+
     def test_the_pending_transactions_will_be_removed_when_a_block_is_mined(self):
         block_chain = BlockChain()
-        block_chain.transactions = ['test_transactions']
-        added_block = block_chain.add_block()
+        block_chain.transactions = [sample_transaction]
+        added_block = block_chain.add_block('miner_address')
 
         self.assertIsNotNone(added_block)
         self.assertEqual(block_chain.transactions, [])
@@ -109,21 +120,21 @@ class BlockChainTestCase(unittest.TestCase):
     def test_the_transaction_output_pool_will_be_cleared_when_a_block_is_mined(self):
         block_chain = BlockChain()
         block_chain.transaction_output_pool = ['test_utxo']
-        added_block = block_chain.add_block()
+        added_block = block_chain.add_block('miner_address')
 
         self.assertIsNotNone(added_block)
         self.assertEqual(block_chain.transaction_output_pool, [])
 
     def test_the_chain_returns_the_correct_block(self):
         block_chain = BlockChain()
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
         block = block_chain.get_block(block_chain.chain[-1].hash)
 
         self.assertTrue(block_chain.chain[-1] == block)
 
     def test_the_chain_returns_none_when_a_block_is_not_found(self):
         block_chain = BlockChain()
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
         block = block_chain.get_block('test_hash')
 
         self.assertTrue(block is None)
@@ -147,16 +158,16 @@ class BlockChainTestCase(unittest.TestCase):
         block_chain = BlockChain()
         block_chain.transactions = [sample_transaction]
 
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
 
         self.assertTrue(block_chain.is_valid())
 
     @patch('time.time_ns', mock_time)
     def test_the_chain_returns_invalid_when_the_chain_is_invalid_caused_wrong_hash(self):
         block_chain = BlockChain()
-        block_chain.transactions = ['test_transactions']
+        block_chain.transactions = [sample_transaction]
 
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
         block_chain.chain[1].hash = 'test_hash'
 
         self.assertFalse(block_chain.is_valid())
@@ -164,9 +175,9 @@ class BlockChainTestCase(unittest.TestCase):
     @patch('time.time_ns', mock_time)
     def test_the_chain_returns_invalid_when_the_chain_is_invalid_caused_wrong_previous_hash(self):
         block_chain = BlockChain()
-        block_chain.transactions = ['test_transactions']
+        block_chain.transactions = [sample_transaction]
 
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
         block_chain.chain[1].previous_hash = 'test_hash'
         block_chain.chain[1].hash = block_chain.chain[1].calculate_hash()
 
@@ -175,7 +186,7 @@ class BlockChainTestCase(unittest.TestCase):
     def test_the_chain_can_get_a_transaction_output_from_the_chain(self):
         block_chain = BlockChain()
         block_chain.add_transaction(sample_transaction)
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
 
         self.assertEqual(block_chain.get_transaction_output(sample_transaction_output.id), sample_transaction_output)
 
@@ -201,7 +212,7 @@ class BlockChainTestCase(unittest.TestCase):
 
         block_chain.add_transaction(mined_transaction_plus_5)
         block_chain.add_transaction(mined_transaction_minus_3)
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
 
         block_chain.add_transaction(pending_transaction_plus_2)
         block_chain.add_transaction(pending_transaction_minus_1)
@@ -211,9 +222,9 @@ class BlockChainTestCase(unittest.TestCase):
     def test_the_blocks_can_be_received_from_a_specific_height(self):
         block_chain = BlockChain()
         block_chain.create_genesis_block()
-        block_chain.add_block()
-        expected_block_1 = block_chain.add_block()
-        expected_block_2 = block_chain.add_block()
+        block_chain.add_block('miner_address')
+        expected_block_1 = block_chain.add_block('miner_address')
+        expected_block_2 = block_chain.add_block('miner_address')
 
         received_blocks = block_chain.get_blocks_from_height(2)
 
@@ -224,7 +235,7 @@ class BlockChainTestCase(unittest.TestCase):
     def test_a_block_can_not_be_added_to_the_chain_from_a_dict_when_a_transaction_is_invalid(self):
         block_chain = BlockChain()
         block_chain.create_genesis_block()
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
 
         block = Block([sample_transaction], block_chain.chain[-1].hash)
         block_dict = block.__dict__()
@@ -235,7 +246,7 @@ class BlockChainTestCase(unittest.TestCase):
     def test_a_block_can_be_added_to_the_chain_from_a_dict_when_its_transactions_are_valid(self):
         block_chain = BlockChain()
         block_chain.create_genesis_block()
-        block_chain.add_block()
+        block_chain.add_block('miner_address')
         block_chain.add_transaction(sample_transaction)
 
         block = Block([sample_transaction], block_chain.chain[-1].hash)

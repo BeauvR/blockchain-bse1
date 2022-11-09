@@ -60,6 +60,11 @@ class AppTestCase(unittest.TestCase):
         self.assertTrue(response.json[0]['previous_hash'] == '0000')
         self.assertTrue(response.json[1]['hash'] == block.hash)
 
+    def test_the_app_can_not_mine_a_block_when_there_is_no_address(self):
+        client = app.test_client(self)
+        response = client.post('/block')
+
+        self.assertEqual(response.status_code, 400)
     @patch('time.time_ns', mock_time)
     def test_the_app_can_mine_a_block(self):
         # reset the chain for testing
@@ -68,7 +73,7 @@ class AppTestCase(unittest.TestCase):
         app_block_chain.transaction_output_pool = [sample_transaction_output]
 
         client = app.test_client(self)
-        response = client.post('/block')
+        response = client.post('/block', json={'address': 'address'})
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue('nonce' in response.json)
@@ -265,9 +270,9 @@ class AppTestCase(unittest.TestCase):
         client = app.test_client(self)
 
         app_block_chain.create_genesis_block()
-        app_block_chain.add_block()
-        expected_block_1 = app_block_chain.add_block()
-        expected_block_2 = app_block_chain.add_block()
+        app_block_chain.add_block('miner_address')
+        expected_block_1 = app_block_chain.add_block('miner_address')
+        expected_block_2 = app_block_chain.add_block('miner_address')
 
         response = client.get('/blocks-from-height/2')
 

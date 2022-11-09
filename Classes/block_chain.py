@@ -14,6 +14,7 @@ class BlockChain(object):
         self.transactions: List[Transaction] = []
         self.create_genesis_block()
         self.difficulty = 2
+        self.coinbase = 1
         self.transaction_output_pool: List[TransactionOutput] = []
 
     def create_genesis_block(self) -> None:
@@ -28,7 +29,14 @@ class BlockChain(object):
     def get_last_block(self) -> Block:
         return self.chain[-1]
 
-    def add_block(self) -> Block:
+    def add_block(self, miner_address) -> Block:
+        transaction = Transaction(
+            [],
+            [TransactionOutput(miner_address, self.get_balance(miner_address) + self.coinbase)]
+        )
+
+        self.transactions.insert(0, transaction)
+
         block = Block(
             self.transactions,
             self.get_last_block().hash
@@ -79,7 +87,7 @@ class BlockChain(object):
 
         return None
 
-    def get_balance(self, address: str) -> float:
+    def get_balance(self, address: str) -> int:
         balance = 0
 
         for block in self.chain:
@@ -108,7 +116,7 @@ class BlockChain(object):
 
     def add_block_from_dict(self, block_dict: dict) -> bool:
         block = Block.from_dict(block_dict)
-        
+
         for transaction in block.transactions:
             if not transaction.is_valid(self):
                 return False

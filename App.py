@@ -40,8 +40,13 @@ def get_chain() -> Response:
 
 
 @app.route('/block', methods=['POST'])
+@expects_json({
+    "type": "object",
+    "required": ["address"],
+    'address': {'type': 'string'},
+})
 def create_block() -> Response:
-    block = block_chain.add_block()
+    block = block_chain.add_block(request.json['address'])
 
     for node in nodes:
         node.broadcast_block(block)
