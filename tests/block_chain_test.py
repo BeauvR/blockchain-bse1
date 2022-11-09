@@ -52,11 +52,11 @@ class BlockChainTestCase(unittest.TestCase):
         self.assertTrue(genesis_block.previous_hash == '0000')
         self.assertTrue(genesis_block.hash is not None)
 
-    def test_a_genesis_block_has_a_coin_base_transaction(self):
+    def test_a_genesis_block_has_no_transaction(self):
         block_chain = BlockChain()
         block_chain.create_genesis_block()
 
-        self.assertTrue(len(block_chain.chain[0].transactions) == 1)
+        self.assertTrue(len(block_chain.chain[0].transactions) == 0)
 
     def test_the_chain_returns_the_correct_genesis_block(self):
         block_chain = BlockChain()
@@ -188,3 +188,21 @@ class BlockChainTestCase(unittest.TestCase):
         block_chain = BlockChain()
 
         self.assertEqual(block_chain.get_transaction_output('test_id'), None)
+
+    def test_the_chain_can_get_a_balance_from_a_address_when_there_are_blocks_with_transactions(self):
+        block_chain = BlockChain()
+        block_chain.create_genesis_block()
+
+        mined_transaction_plus_5 = Transaction([], [TransactionOutput('address2', 5)])
+        mined_transaction_minus_3 = Transaction([TransactionInput(TransactionOutput('address2', 3))], [])
+        pending_transaction_plus_2 = Transaction([], [TransactionOutput('address2', 2)])
+        pending_transaction_minus_1 = Transaction([TransactionInput(TransactionOutput('address2', 1))], [])
+
+        block_chain.add_transaction(mined_transaction_plus_5)
+        block_chain.add_transaction(mined_transaction_minus_3)
+        block_chain.add_block()
+
+        block_chain.add_transaction(pending_transaction_plus_2)
+        block_chain.add_transaction(pending_transaction_minus_1)
+
+        self.assertEqual(block_chain.get_balance('address2'), 3)

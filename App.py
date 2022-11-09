@@ -103,3 +103,11 @@ def is_valid():
     return jsonify({
         'valid': block_chain.is_valid(),
     })
+
+
+@app.route('/balance/<address>', methods=['GET'])
+def get_balance(address) -> Response:
+    balance = block_chain.get_balance(address)
+    return jsonify({
+        'balance': balance,
+    })

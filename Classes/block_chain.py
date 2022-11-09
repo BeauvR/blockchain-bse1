@@ -17,8 +17,7 @@ class BlockChain(object):
         self.transaction_output_pool: List[TransactionOutput] = []
 
     def create_genesis_block(self) -> None:
-        coinbase = Transaction([], [])
-        block = Block([coinbase], '0000')
+        block = Block([], '0000')
 
         self.chain = [block]
         return None
@@ -79,3 +78,27 @@ class BlockChain(object):
                 return output
 
         return None
+
+    def get_balance(self, address: str) -> float:
+        balance = 0
+
+        for block in self.chain:
+            for transaction in block.transactions:
+                for output in transaction.outputs:
+                    if output.address == address:
+                        balance += output.amount
+
+                for input in transaction.inputs:
+                    if input.transaction_output.address == address:
+                        balance -= input.transaction_output.amount
+
+        for transaction in self.transactions:
+            for output in transaction.outputs:
+                if output.address == address:
+                    balance += output.amount
+
+            for input in transaction.inputs:
+                if input.transaction_output.address == address:
+                    balance -= input.transaction_output.amount
+
+        return balance

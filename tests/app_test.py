@@ -174,3 +174,16 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue('valid' in response.json)
         self.assertTrue(response.json['valid'] == AppBlockChain.is_valid())
+
+    def test_the_app_returns_the_correct_balance(self):
+        AppBlockChain.transaction_output_pool = [sample_transaction_output]
+
+        pending_transaction_plus_2 = Transaction([], [TransactionOutput('address2', 2)])
+        AppBlockChain.add_transaction(pending_transaction_plus_2)
+
+        client = app.test_client(self)
+        response = client.get('/balance/address2')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('balance' in response.json)
+        self.assertTrue(response.json['balance'] == 2)
