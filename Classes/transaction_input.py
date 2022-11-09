@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import time
 
@@ -26,6 +28,15 @@ class TransactionInput(object):
 
         # for testing purposes it returns false when a signature is set, TODO: implement signature verification
         return False
+
+    @staticmethod
+    def from_dict(dict_transaction_input: dict) -> TransactionInput:
+        transaction_input =  TransactionInput(TransactionOutput.from_dict(dict_transaction_input["transaction_output"]))
+        transaction_input.signature = dict_transaction_input["signature"]
+        transaction_input.time = dict_transaction_input["time"]
+        transaction_input.id = dict_transaction_input["id"]
+
+        return transaction_input
 
     def get_id_value_string(self) -> str:
         return str(self.time) + " " + str(self.transaction_output)

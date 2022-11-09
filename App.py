@@ -43,6 +43,9 @@ def get_chain() -> Response:
 def create_block() -> Response:
     block = block_chain.add_block()
 
+    for node in nodes:
+        node.broadcast_block(block)
+
     return jsonify(block.__dict__())
 
 
@@ -153,3 +156,15 @@ def register_node():
 def get_blocks_from_height(height) -> Response:
     blocks = block_chain.get_blocks_from_height(int(height))
     return jsonify(list(map(lambda block: block.__dict__(), blocks)))
+
+
+@app.route('/node/block', methods=['POST'])
+def receive_block():
+    data = request.json
+
+    block_added = block_chain.add_block_from_dict(data)
+
+    if block_added:
+        return jsonify({'success': True}), 201
+
+    return jsonify({'error': 'Block not added'}), 400

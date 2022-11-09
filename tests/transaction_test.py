@@ -415,6 +415,42 @@ class TransactionTestCase(unittest.TestCase):
 
         self.assertTrue(transaction.is_valid(block_chain))
 
+    def test_a_transaction_can_be_made_from_a_dict(self):
+        transaction = Transaction.from_dict({
+            'inputs': [
+                {
+                    'transaction_output': {
+                        'address': 'address1',
+                        'amount': 1,
+                        'mode': 'normal',
+                        'time': 1234567890,
+                        'id': 'test_id'
+                    },
+                    'signature': 'test_signature',
+                    'time': 1234567890,
+                    'id': 'test_id'
+                }
+            ],
+            'outputs': [
+                {
+                    'address': 'address1',
+                    'amount': 1,
+                    'mode': 'normal',
+                    'time': 1234567890,
+                    'id': 'test_id'
+                }
+            ],
+            'time': 1234567890,
+            'id': 'test_id'
+        })
+
+        self.assertIsNotNone(transaction.inputs)
+        self.assertIsNotNone(transaction.outputs)
+        self.assertEqual(1234567890, transaction.time)
+        self.assertEqual('test_id', transaction.id)
+
+
+
     def test_a_transaction_correctly_transforms_itself_to_a_string(self):
         transaction = Transaction([sample_transaction_input], [sample_transaction_output])
         self.assertEqual(

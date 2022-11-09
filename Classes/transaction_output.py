@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import time
 
@@ -14,6 +16,20 @@ class TransactionOutput(object):
         sha = hashlib.sha256()
         sha.update(self.get_id_value_string().encode('utf-8'))
         return sha.hexdigest()
+
+    @staticmethod
+    def from_dict(dict_transaction_output: dict) -> TransactionOutput:
+        transaction_output = TransactionOutput(
+            dict_transaction_output["address"],
+            dict_transaction_output["amount"],
+            dict_transaction_output["mode"]
+        )
+
+        transaction_output.time = dict_transaction_output["time"]
+        transaction_output.id = dict_transaction_output["id"]
+
+        return transaction_output
+
 
     def get_id_value_string(self) -> str:
         return str(self.address) + " " \

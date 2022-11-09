@@ -1,9 +1,11 @@
 import unittest
 
+from Classes.block import Block
 from Classes.node import Node
 
 
 class NodeTestCase(unittest.TestCase):
+
     def test_the_node_can_be_initialized(self):
         node = Node(
             '127.0.0.1',
@@ -19,6 +21,16 @@ class NodeTestCase(unittest.TestCase):
         )
 
         self.assertEqual('127.0.0.1:5000', node.url)
+
+    def test_there_can_be_a_block_broadcasted_to_the_node(self):
+        node = Node(
+            '127.0.0.1',
+            5000,
+        )
+
+        res = node.broadcast_block(Block([], '0000'))
+
+        self.assertIsNone(res)
 
     def test_the_node_can_be_converted_to_a_string(self):
         node = Node(

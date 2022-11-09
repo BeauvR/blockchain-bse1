@@ -62,6 +62,52 @@ class BlockTestCase(unittest.TestCase):
 
         self.assertEqual('000', block.hash[:3])
 
+    def test_a_block_can_be_created_from_a_dict(self):
+        block_dict = {
+            'transactions': [
+                {
+                    'inputs': [
+                        {
+                            'transaction_output': {
+                                'address': 'address1',
+                                'amount': 1,
+                                'mode': 'normal',
+                                'time': 1234567890,
+                                'id': 'test_id'
+                            },
+                            'signature': 'test_signature',
+                            'time': 1234567890,
+                            'id': 'test_id'
+                        }
+                    ],
+                    'outputs': [
+                        {
+                            'address': 'address1',
+                            'amount': 1,
+                            'mode': 'normal',
+                            'time': 1234567890,
+                            'id': 'test_id'
+                        }
+                    ],
+                    'time': 1234567890,
+                    'id': 'test_id'
+                },
+            ],
+            'timestamp': 1234567890,
+            'previous_hash': '0000',
+            'nonce': 0,
+            'hash': 'test_hash'
+        }
+
+        block = Block.from_dict(block_dict)
+
+        self.assertIsNotNone(block.transactions)
+        self.assertEqual(1, len(block.transactions))
+        self.assertEqual(1234567890, block.timestamp)
+        self.assertEqual('0000', block.previous_hash)
+        self.assertEqual(0, block.nonce)
+        self.assertEqual('test_hash', block.hash)
+
     def test_when_a_block_is_transformed_to_a_string_it_should_return_the_correct_string(self):
         block = Block([sample_transaction_1, sample_transaction_2], '0000')
         self.assertEqual(

@@ -43,6 +43,24 @@ class TransactionInputTestCase(unittest.TestCase):
         transaction_input.set_signature('test_signature')
         self.assertFalse(transaction_input.verify_signature('test_key'))
 
+    def test_a_transaction_input_can_be_made_from_a_dict(self):
+        transaction_input = TransactionInput.from_dict({
+            'transaction_output': {
+                'address': 'address1',
+                'amount': 1,
+                'mode': 'normal',
+                'time': 1234567890,
+                'id': 'test_id'
+            },
+            'signature': 'test_signature',
+            'time': 1234567890,
+            'id': 'test_id'
+        })
+        self.assertIsNotNone(transaction_input.transaction_output)
+        self.assertEqual('test_signature', transaction_input.signature)
+        self.assertEqual(1234567890, transaction_input.time)
+        self.assertEqual('test_id', transaction_input.id)
+
     @patch('time.time_ns', mock_time)
     def test_a_transaction_input_correctly_transforms_itself_to_a_string(self):
         transaction_input = TransactionInput(sample_transaction_output)

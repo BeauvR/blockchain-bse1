@@ -109,6 +109,22 @@ class Transaction(object):
 
         return True
 
+    @staticmethod
+    def from_dict(transaction_dict: dict) -> Transaction:
+        inputs = []
+        for input in transaction_dict["inputs"]:
+            inputs.append(TransactionInput.from_dict(input))
+
+        outputs = []
+        for output in transaction_dict["outputs"]:
+            outputs.append(TransactionOutput.from_dict(output))
+
+        transaction = Transaction(inputs, outputs)
+        transaction.time = transaction_dict["time"]
+        transaction.id = transaction_dict["id"]
+
+        return transaction
+
     def get_id_value_string(self) -> str:
         return self.inputs_to_string() + " -> " + self.outputs_to_string()
 

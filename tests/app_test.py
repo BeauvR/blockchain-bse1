@@ -1,4 +1,5 @@
-from App import app, block_chain as app_block_chain, nodes as app_nodes, node_register_password as app_node_register_password
+from App import app, block_chain as app_block_chain, nodes as app_nodes, \
+    node_register_password as app_node_register_password
 
 import unittest
 from mock import *
@@ -17,7 +18,6 @@ sample_transaction_output = TransactionOutput('address1', 1)
 sample_transaction_input = TransactionInput(sample_transaction_output)
 
 sample_transaction = Transaction([sample_transaction_input], [sample_transaction_output])
-
 
 class AppTestCase(unittest.TestCase):
     def test_the_app_returns_the_correct_difficulty(self):
@@ -155,6 +155,7 @@ class AppTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json['error'], 'Invalid transaction')
+
     def test_the_app_can_create_a_transaction(self):
         app_block_chain.transaction_output_pool = [sample_transaction_output]
 
@@ -268,8 +269,31 @@ class AppTestCase(unittest.TestCase):
         expected_block_1 = app_block_chain.add_block()
         expected_block_2 = app_block_chain.add_block()
 
-
         response = client.get('/blocks-from-height/2')
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(len(response.json) == 2)
+
+    def test_a_mined_block_can_be_broadcasted_when_valid(self):
+        client = app.test_client(self)
+
+        app_block_chain.add_transaction(sample_transaction)
+        block = Block([sample_transaction], app_block_chain.get_last_block().hash)
+        block.calculate_hash()
+
+        response = client.post('/node/block', json=block.__dict__())
+
+        self.assertEqual(response.status_code, 201)
+
+    def test_a_mined_block_can_not_be_broadcasted_when_invalid(self):
+        client = app.test_client(self)
+
+        app_block_chain.create_genesis_block()
+        app_block_chain.transactions = []
+        app_block_chain.transaction_output_pool = []
+
+        block = Block([sample_transaction], 'invalid')
+
+        response = client.post('/node/block', json=block.__dict__())
+
+        self.assertEqual(response.status_code, 400)

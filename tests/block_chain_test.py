@@ -1,6 +1,7 @@
 import unittest
 from mock import *
 
+from Classes.block import Block
 from Classes.block_chain import BlockChain
 from Classes.transaction import Transaction
 from Classes.transaction_input import TransactionInput
@@ -219,3 +220,25 @@ class BlockChainTestCase(unittest.TestCase):
         self.assertEqual(len(received_blocks), 2)
         self.assertEqual(received_blocks[0], expected_block_1)
         self.assertEqual(received_blocks[1], expected_block_2)
+
+    def test_a_block_can_not_be_added_to_the_chain_from_a_dict_when_a_transaction_is_invalid(self):
+        block_chain = BlockChain()
+        block_chain.create_genesis_block()
+        block_chain.add_block()
+
+        block = Block([sample_transaction], block_chain.chain[-1].hash)
+        block_dict = block.__dict__()
+        block_dict['transactions'][0]['inputs'][0]['transaction_output_id'] = 'test_id'
+
+        self.assertFalse(block_chain.add_block_from_dict(block_dict))
+
+    def test_a_block_can_be_added_to_the_chain_from_a_dict_when_its_transactions_are_valid(self):
+        block_chain = BlockChain()
+        block_chain.create_genesis_block()
+        block_chain.add_block()
+        block_chain.add_transaction(sample_transaction)
+
+        block = Block([sample_transaction], block_chain.chain[-1].hash)
+        block_dict = block.__dict__()
+
+        self.assertTrue(block_chain.add_block_from_dict(block_dict))

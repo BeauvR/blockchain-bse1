@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import time
 from typing import List
@@ -36,6 +38,19 @@ class Block(object):
             self.hash = self.calculate_hash()
 
         return None
+
+    @staticmethod
+    def from_dict(block_dict: dict) -> Block:
+        transactions = []
+        for transaction_dict in block_dict["transactions"]:
+            transaction = Transaction([], [])
+            transactions.append(transaction.from_dict(transaction_dict))
+        block = Block(transactions, block_dict["previous_hash"])
+        block.timestamp = block_dict["timestamp"]
+        block.nonce = block_dict["nonce"]
+        block.hash = block_dict["hash"]
+
+        return block
 
     def __str__(self) -> str:
         return str(self.hash) + ": " + self.get_id_value_string()

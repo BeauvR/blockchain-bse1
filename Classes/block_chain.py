@@ -105,3 +105,14 @@ class BlockChain(object):
 
     def get_blocks_from_height(self, index: int) -> List[Block]:
         return self.chain[index:]
+
+    def add_block_from_dict(self, block_dict: dict) -> bool:
+        block = Block.from_dict(block_dict)
+        
+        for transaction in block.transactions:
+            if not transaction.is_valid(self):
+                return False
+
+        self.chain.append(block)
+
+        return True
