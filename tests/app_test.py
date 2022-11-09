@@ -1,4 +1,4 @@
-from App import app, block_chain as AppBlockChain, nodes as AppNodes, node_register_password as AppNodeRegisterPassword
+from App import app, block_chain as app_block_chain, nodes as app_nodes, node_register_password as app_node_register_password
 
 import unittest
 from mock import *
@@ -25,7 +25,7 @@ class AppTestCase(unittest.TestCase):
         response = client.get('/difficulty')
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json == AppBlockChain.difficulty)
+        self.assertTrue(response.json == app_block_chain.difficulty)
 
     def test_when_the_app_runs_a_genesis_block_is_created(self):
         client = app.test_client(self)
@@ -38,7 +38,7 @@ class AppTestCase(unittest.TestCase):
     @patch('time.time_ns', mock_time)
     def test_when_the_app_runs_it_returns_the_correct_last_block(self):
         newest_block = Block([sample_transaction], 'previous_hash')
-        AppBlockChain.chain.append(newest_block)
+        app_block_chain.chain.append(newest_block)
 
         client = app.test_client(self)
         response = client.get('/lastBlock')
@@ -49,9 +49,9 @@ class AppTestCase(unittest.TestCase):
 
     def test_when_the_app_runs_it_returns_the_correct_chain(self):
         # reset the chain for testing
-        AppBlockChain.create_genesis_block()
+        app_block_chain.create_genesis_block()
         block = Block([sample_transaction], 'previous_hash')
-        AppBlockChain.chain.append(block)
+        app_block_chain.chain.append(block)
 
         client = app.test_client(self)
         response = client.get('/chain')
@@ -63,9 +63,9 @@ class AppTestCase(unittest.TestCase):
     @patch('time.time_ns', mock_time)
     def test_the_app_can_mine_a_block(self):
         # reset the chain for testing
-        AppBlockChain.create_genesis_block()
-        AppBlockChain.transactions = [sample_transaction]
-        AppBlockChain.transaction_output_pool = [sample_transaction_output]
+        app_block_chain.create_genesis_block()
+        app_block_chain.transactions = [sample_transaction]
+        app_block_chain.transaction_output_pool = [sample_transaction_output]
 
         client = app.test_client(self)
         response = client.post('/block')
@@ -74,11 +74,11 @@ class AppTestCase(unittest.TestCase):
         self.assertTrue('nonce' in response.json)
         self.assertIsNotNone(response.json['nonce'])
         self.assertTrue('hash' in response.json)
-        self.assertTrue(response.json['hash'] == AppBlockChain.get_last_block().hash)
+        self.assertTrue(response.json['hash'] == app_block_chain.get_last_block().hash)
 
     def test_the_app_can_get_a_block(self):
         block = Block([sample_transaction], 'previous_hash')
-        AppBlockChain.chain.append(block)
+        app_block_chain.chain.append(block)
 
         client = app.test_client(self)
         response = client.get('/block/' + block.hash)
@@ -143,7 +143,7 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_the_app_returns_a_error_when_the_transaction_is_not_valid(self):
-        AppBlockChain.transaction_output_pool = [sample_transaction_output]
+        app_block_chain.transaction_output_pool = [sample_transaction_output]
 
         client = app.test_client(self)
         response = client.post(
@@ -156,7 +156,7 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json['error'], 'Invalid transaction')
     def test_the_app_can_create_a_transaction(self):
-        AppBlockChain.transaction_output_pool = [sample_transaction_output]
+        app_block_chain.transaction_output_pool = [sample_transaction_output]
 
         client = app.test_client(self)
         response = client.post(
@@ -174,13 +174,13 @@ class AppTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue('valid' in response.json)
-        self.assertTrue(response.json['valid'] == AppBlockChain.is_valid())
+        self.assertTrue(response.json['valid'] == app_block_chain.is_valid())
 
     def test_the_app_returns_the_correct_balance(self):
-        AppBlockChain.transaction_output_pool = [sample_transaction_output]
+        app_block_chain.transaction_output_pool = [sample_transaction_output]
 
         pending_transaction_plus_2 = Transaction([], [TransactionOutput('address2', 2)])
-        AppBlockChain.add_transaction(pending_transaction_plus_2)
+        app_block_chain.add_transaction(pending_transaction_plus_2)
 
         client = app.test_client(self)
         response = client.get('/balance/address2')
@@ -201,7 +201,7 @@ class AppTestCase(unittest.TestCase):
     def test_a_node_can_not_be_registered_without_an_address(self):
         client = app.test_client(self)
         response = client.post('/node/register', json={
-            'password': AppNodeRegisterPassword,
+            'password': app_node_register_password,
             'port': 5000,
         })
 
@@ -210,7 +210,7 @@ class AppTestCase(unittest.TestCase):
     def test_a_node_can_not_be_registered_without_a_port(self):
         client = app.test_client(self)
         response = client.post('/node/register', json={
-            'password': AppNodeRegisterPassword,
+            'password': app_node_register_password,
             'address': '127.0.0.1',
         })
 
@@ -219,7 +219,7 @@ class AppTestCase(unittest.TestCase):
     def test_a_node_can_not_be_registered_with_a_string_as_port(self):
         client = app.test_client(self)
         response = client.post('/node/register', json={
-            'password': AppNodeRegisterPassword,
+            'password': app_node_register_password,
             'address': '127.0.0.1',
             'port': '5000',
         })
@@ -242,7 +242,7 @@ class AppTestCase(unittest.TestCase):
         AppNodes = [Node('127.0.0.1', 5000)]
 
         response = client.post('/node/register', json={
-            'password': AppNodeRegisterPassword,
+            'password': app_node_register_password,
             'address': '127.0.0.1',
             'port': 5000,
         })
@@ -253,9 +253,23 @@ class AppTestCase(unittest.TestCase):
         client = app.test_client(self)
 
         response = client.post('/node/register', json={
-            'password': AppNodeRegisterPassword,
+            'password': app_node_register_password,
             'address': '127.0.0.1',
             'port': 5000,
         })
 
         self.assertEqual(response.status_code, 201)
+
+    def test_blocks_can_be_requested_from_a_specific_height(self):
+        client = app.test_client(self)
+
+        app_block_chain.create_genesis_block()
+        app_block_chain.add_block()
+        expected_block_1 = app_block_chain.add_block()
+        expected_block_2 = app_block_chain.add_block()
+
+
+        response = client.get('/blocks-from-height/2')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(len(response.json) == 2)

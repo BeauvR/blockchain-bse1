@@ -102,3 +102,6 @@ class BlockChain(object):
                     balance -= input.transaction_output.amount
 
         return balance
+
+    def get_blocks_from_height(self, index: int) -> List[Block]:
+        return self.chain[index:]

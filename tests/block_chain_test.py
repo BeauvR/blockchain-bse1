@@ -206,3 +206,16 @@ class BlockChainTestCase(unittest.TestCase):
         block_chain.add_transaction(pending_transaction_minus_1)
 
         self.assertEqual(block_chain.get_balance('address2'), 3)
+
+    def test_the_blocks_can_be_received_from_a_specific_height(self):
+        block_chain = BlockChain()
+        block_chain.create_genesis_block()
+        block_chain.add_block()
+        expected_block_1 = block_chain.add_block()
+        expected_block_2 = block_chain.add_block()
+
+        received_blocks = block_chain.get_blocks_from_height(2)
+
+        self.assertEqual(len(received_blocks), 2)
+        self.assertEqual(received_blocks[0], expected_block_1)
+        self.assertEqual(received_blocks[1], expected_block_2)

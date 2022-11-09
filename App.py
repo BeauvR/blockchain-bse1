@@ -147,3 +147,9 @@ def register_node():
     nodes.append(node)
 
     return jsonify({'success': True}), 201
+
+
+@app.route('/blocks-from-height/<height>', methods=['GET'])
+def get_blocks_from_height(height) -> Response:
+    blocks = block_chain.get_blocks_from_height(int(height))
+    return jsonify(list(map(lambda block: block.__dict__(), blocks)))
