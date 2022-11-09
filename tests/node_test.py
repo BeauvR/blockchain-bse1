@@ -2,6 +2,7 @@ import unittest
 
 from Classes.block import Block
 from Classes.node import Node
+from Classes.transaction import Transaction
 
 
 class NodeTestCase(unittest.TestCase):
@@ -29,6 +30,16 @@ class NodeTestCase(unittest.TestCase):
         )
 
         res = node.broadcast_block(Block([], '0000'))
+
+        self.assertIsNone(res)
+
+    def test_there_can_be_a_transaction_broadcasted_to_the_node(self):
+        node = Node(
+            '127.0.0.1',
+            5000,
+        )
+
+        res = node.broadcast_transaction(Transaction([], []))
 
         self.assertIsNone(res)
 

@@ -173,3 +173,15 @@ def receive_block():
         return jsonify({'success': True}), 201
 
     return jsonify({'error': 'Block not added'}), 400
+
+
+@app.route('/node/transaction', methods=['POST'])
+def receive_transaction():
+    data = request.json
+
+    transaction_added = block_chain.add_transaction_from_dict(data)
+
+    if transaction_added:
+        return jsonify({'success': True}), 201
+
+    return jsonify({'error': 'Block not added'}), 400

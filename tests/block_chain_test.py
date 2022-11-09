@@ -253,3 +253,23 @@ class BlockChainTestCase(unittest.TestCase):
         block_dict = block.__dict__()
 
         self.assertTrue(block_chain.add_block_from_dict(block_dict))
+
+    def test_a_transaction_can_not_be_added_from_a_dict_when_its_invalid(self):
+        block_chain = BlockChain()
+        block_chain.create_genesis_block()
+        block_chain.add_block('miner_address')
+
+        transaction_dict = sample_transaction.__dict__()
+        transaction_dict['inputs'][0]['transaction_output_id'] = 'test_id'
+
+        self.assertFalse(block_chain.add_transaction_from_dict(transaction_dict))
+
+    def test_a_transaction_can_be_added_from_a_dict_when_its_valid(self):
+        block_chain = BlockChain()
+        block_chain.create_genesis_block()
+        block_chain.add_block('miner_address')
+        block_chain.transaction_output_pool = [sample_transaction_output]
+
+        transaction_dict = sample_transaction.__dict__()
+
+        self.assertTrue(block_chain.add_transaction_from_dict(transaction_dict))

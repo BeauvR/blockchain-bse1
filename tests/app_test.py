@@ -302,3 +302,22 @@ class AppTestCase(unittest.TestCase):
         response = client.post('/node/block', json=block.__dict__())
 
         self.assertEqual(response.status_code, 400)
+
+    def test_a_transaction_can_be_broadcasted_when_valid(self):
+        client = app.test_client(self)
+        app_block_chain.transaction_output_pool = [sample_transaction_output]
+
+        response = client.post('/node/transaction', json=sample_transaction.__dict__())
+
+        self.assertEqual(response.status_code, 201)
+
+    def test_a_transaction_can_not_be_broadcasted_when_invalid(self):
+        client = app.test_client(self)
+
+        app_block_chain.create_genesis_block()
+        app_block_chain.transactions = []
+        app_block_chain.transaction_output_pool = []
+
+        response = client.post('/node/transaction', json=sample_transaction.__dict__())
+
+        self.assertEqual(response.status_code, 400)

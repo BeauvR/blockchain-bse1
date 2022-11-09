@@ -124,3 +124,15 @@ class BlockChain(object):
         self.chain.append(block)
 
         return True
+
+    def add_transaction_from_dict(self, transaction_dict: dict) -> bool:
+        transaction = Transaction.from_dict(transaction_dict)
+
+        if not transaction.is_valid(self):
+            return False
+
+        self.transactions.append(transaction)
+        for output in transaction.outputs:
+            self.transaction_output_pool.append(output)
+
+        return True
